@@ -31,6 +31,7 @@
     var viewWrapper = document.createElement('p');
     root.appendChild(viewWrapper);
     var view = document.createElement('a');
+    view.textContent = 'View on Spotify';
     viewWrapper.appendChild(view);
 
     return {
@@ -66,7 +67,7 @@
       artist: data.name,
       image: data.images[0].url,
       followers: data.followers.total,
-      view: data.href
+      view: data.external_urls.spotify
     });
   };
 

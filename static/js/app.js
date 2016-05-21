@@ -8,7 +8,6 @@
   function request(inputOptions) {
     var options = app.util.merge({
       url: '',
-      data: {},
       method: 'GET',
       onLoad: null,
       onError: null,
@@ -42,8 +41,9 @@
     SEED_ARTIST: SEED_ARTIST,
 
     fetchArtist: function (id) {
+      var uri = 'https://api.spotify.com/v1/artists/{id}';
       request({
-        url: parse('https://api.spotify.com/v1/artists/{id}', { id: id }),
+        url: parse(uri, { id: id }),
         onLoad: function (data) {
           app.store.receive(app.store.types.RECEIVE_PRIMARY_ARTIST, data);
         },
@@ -54,10 +54,9 @@
     },
 
     fetchRelatedArtists: function (id) {
+      var uri = 'https://api.spotify.com/v1/artists/{id}/related-artists';
       request({
-        url: parse(
-          'https://api.spotify.com/v1/artists/{id}/related-artists', { id: id }
-        ),
+        url: parse(uri, { id: id }),
         onLoad: function (data) {
           app.store.receive(app.store.types.RECEIVE_RELATED_ARTISTS, data);
         },
@@ -65,6 +64,23 @@
           app.store.receive(app.store.types.ERROR_RELATED_ARTISTS);
         }
       });
+    },
+
+    fetchTopTracks: function (id) {
+      var uri = 'https://api.spotify.com/v1/artists/{id}/top-tracks?country=US';
+      request({
+        url: parse(uri, { id: id }),
+        onLoad: function (data) {
+          app.store.receive(app.store.types.RECEIVE_TOP_TRACKS, data);
+        },
+        onError: function () {
+          app.store.receive(app.store.types.ERROR_TOP_TRACKS);
+        }
+      });
+    },
+
+    playTrack: function (id) {
+      app.store.receive(app.store.types.PLAY_TRACK, id);
     }
   };
 })();
@@ -114,10 +130,45 @@
       var apiUtil = app.apiUtil;
       var primaryArtist = new app.PrimaryArtist();
       var relatedArtists = new app.RelatedArtists();
+      var topTracks = new app.TopTracks();
+      var player = new app.Player();
 
       apiUtil.fetchArtist(apiUtil.SEED_ARTIST);
     }
   }
+})();
+(function () {
+  var id = 'player';
+
+  var updaters = {
+    player: function (element, value) {
+      element.setAttribute('src', value);
+    }
+  }
+
+  function Player() {
+    this._root = document.getElementById(id);
+    this._block = new app.Block();
+    this._block.setBinder('player', this._root, updaters.player);
+
+    var store = app.store;
+    var handleChange = this._handleChange.bind(this);
+    store.addListener(store.types.RECEIVE_PRIMARY_ARTIST, handleChange);
+    store.addListener(store.types.PLAY_TRACK, this._handlePlay.bind(this));
+  }
+
+  Player.prototype._handleChange = function () {
+    this._root.setAttribute('src', '');
+  };
+
+  Player.prototype._handlePlay = function () {
+    var track = app.store.getPlayingTrack();
+    this._block.updateProperties({
+      player: track.preview_url
+    });
+  };
+
+  app.Player = Player;
 })();
 (function () {
   var id = 'primary-artist';
@@ -152,6 +203,7 @@
     var viewWrapper = document.createElement('p');
     root.appendChild(viewWrapper);
     var view = document.createElement('a');
+    view.textContent = 'View on Spotify';
     viewWrapper.appendChild(view);
 
     return {
@@ -187,7 +239,7 @@
       artist: data.name,
       image: data.images[0].url,
       followers: data.followers.total,
-      view: data.href
+      view: data.external_urls.spotify
     });
   };
 
@@ -244,7 +296,6 @@
   }
 
   function RelatedArtists() {
-    this._artists = [];
     this._root = document.getElementById(id);
     this._block = new app.Block();
     this._block.setBinder('artists', this._root, updaters.artists);
@@ -262,8 +313,6 @@
   };
 
   RelatedArtists.prototype._handleRelatedChange = function () {
-    this._root = document.getElementById(id);
-
     var artists = app.store.getRelatedArtists();
     this._block.updateProperties({
       artists: artists
@@ -276,14 +325,19 @@
   var listeners = {};
 
   var primaryArtist = null;
-  var relatedArtists = null;
+  var relatedArtists = [];
+  var topTracks = [];
+  var playingTrackId = null;
 
   app.store = {
     types: {
       RECEIVE_PRIMARY_ARTIST: 'RECEIVE_PRIMARY_ARTIST',
       ERROR_PRIMARY_ARTISTS: 'ERROR_PRIMARY_ARTISTS',
       RECEIVE_RELATED_ARTISTS: 'RECEIVE_RELATED_ARTISTS',
-      ERROR_RELATED_ARTISTS: 'ERROR_RELATED_ARTISTS'
+      ERROR_RELATED_ARTISTS: 'ERROR_RELATED_ARTISTS',
+      RECEIVE_TOP_TRACKS: 'RECEIVE_TOP_TRACKS',
+      ERROR_TOP_TRACKS: 'ERROR_TOP_TRACKS',
+      PLAY_TRACK: 'PLAY_TRACK'
     },
 
     addListener: function (type, callback) {
@@ -301,6 +355,12 @@
           break;
         case types.RECEIVE_RELATED_ARTISTS:
           relatedArtists = data.artists;
+          break;
+        case types.RECEIVE_TOP_TRACKS:
+          topTracks = data.tracks;
+          break;
+        case types.PLAY_TRACK:
+          playingTrackId = data;
           break;
       }
 
@@ -326,8 +386,94 @@
         if (relatedArtists[i].id === id) return relatedArtists[i];
       }
       return null;
+    },
+
+    getTopTracks: function () {
+      return topTracks.slice();
+    },
+
+    getTrack: function (id) {
+      for (var i = 0; i < topTracks.length; ++i) {
+        if (topTracks[i].id === id) return topTracks[i];
+      }
+      return null;
+    },
+
+    getPlayingTrack: function () {
+      return app.store.getTrack(playingTrackId);
     }
   };
+})();
+(function () {
+  var id = 'top-tracks';
+
+  function handleTrackClick(id) {
+    return function (e) {
+      console.log(id);
+      app.apiUtil.playTrack(id);
+    };
+  }
+
+  var updaters = {
+    tracks: function (element, value) {
+      app.util.removeAllChildren(element);
+
+      // Display no tracks found
+      if (value.length === 0) {
+        var message = document.createElement('p');
+        message.textContent = 'No tracks found.';
+        element.appendChild(message);
+        return;
+      }
+
+      for (var i = 0; i < value.length; ++i) {
+        var track = value[i];
+        element.appendChild(create(track));
+      }
+    }
+  }
+
+  function create(track) {
+    var list = document.createElement('li');
+    var name = document.createElement('p');
+    name.textContent = track.name;
+    list.appendChild(name);
+
+    var play = document.createElement('button');
+    play.textContent = 'Play';
+    var clickFunction = handleTrackClick(track.id);
+    play.addEventListener('click', clickFunction);
+    play.addEventListener('touchend', clickFunction);
+    list.appendChild(play);
+
+    return list;
+  }
+
+  function TopTracks() {
+    this._root = document.getElementById(id);
+    this._block = new app.Block();
+    this._block.setBinder('tracks', this._root, updaters.tracks);
+
+    var store = app.store;
+    store.addListener(store.types.RECEIVE_PRIMARY_ARTIST,
+      this._handleArtistChange.bind(this));
+    store.addListener(store.types.RECEIVE_TOP_TRACKS,
+      this._handleTracksChange.bind(this));
+  }
+
+  TopTracks.prototype._handleArtistChange = function () {
+    var artist = app.store.getPrimaryArtist();
+    app.apiUtil.fetchTopTracks(artist.id);
+  };
+
+  TopTracks.prototype._handleTracksChange = function () {
+    var tracks = app.store.getTopTracks();
+    this._block.updateProperties({
+      tracks: tracks
+    });
+  };
+
+  app.TopTracks = TopTracks;
 })();
 (function () {
   app.util = {
@@ -347,6 +493,9 @@
       return obj;
     },
 
+    /**
+     * Removes all children from an element.
+     */
     removeAllChildren(element) {
       while (element.firstChild) {
         element.removeChild(element.firstChild);

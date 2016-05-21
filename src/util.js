@@ -16,6 +16,9 @@
       return obj;
     },
 
+    /**
+     * Removes all children from an element.
+     */
     removeAllChildren(element) {
       while (element.firstChild) {
         element.removeChild(element.firstChild);

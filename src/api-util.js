@@ -4,7 +4,6 @@
   function request(inputOptions) {
     var options = app.util.merge({
       url: '',
-      data: {},
       method: 'GET',
       onLoad: null,
       onError: null,
@@ -38,8 +37,9 @@
     SEED_ARTIST: SEED_ARTIST,
 
     fetchArtist: function (id) {
+      var uri = 'https://api.spotify.com/v1/artists/{id}';
       request({
-        url: parse('https://api.spotify.com/v1/artists/{id}', { id: id }),
+        url: parse(uri, { id: id }),
         onLoad: function (data) {
           app.store.receive(app.store.types.RECEIVE_PRIMARY_ARTIST, data);
         },
@@ -50,10 +50,9 @@
     },
 
     fetchRelatedArtists: function (id) {
+      var uri = 'https://api.spotify.com/v1/artists/{id}/related-artists';
       request({
-        url: parse(
-          'https://api.spotify.com/v1/artists/{id}/related-artists', { id: id }
-        ),
+        url: parse(uri, { id: id }),
         onLoad: function (data) {
           app.store.receive(app.store.types.RECEIVE_RELATED_ARTISTS, data);
         },
@@ -61,6 +60,23 @@
           app.store.receive(app.store.types.ERROR_RELATED_ARTISTS);
         }
       });
+    },
+
+    fetchTopTracks: function (id) {
+      var uri = 'https://api.spotify.com/v1/artists/{id}/top-tracks?country=US';
+      request({
+        url: parse(uri, { id: id }),
+        onLoad: function (data) {
+          app.store.receive(app.store.types.RECEIVE_TOP_TRACKS, data);
+        },
+        onError: function () {
+          app.store.receive(app.store.types.ERROR_TOP_TRACKS);
+        }
+      });
+    },
+
+    playTrack: function (id) {
+      app.store.receive(app.store.types.PLAY_TRACK, id);
     }
   };
 })();

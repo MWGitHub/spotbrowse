@@ -8,29 +8,33 @@
   <body>
     <div class="wrapper">
       <div class="content group">
-        <div class="left">
+        <iframe id="player" class="full"></iframe>
+        <div class="full group">
           <div id="primary-artist">
             <h1>Full Name</h1>
-            <img class="large-image" src="#" alt="primary artist image" />
+            <img class="large-image" src="" alt="primary artist image" />
             <p>0 followers</p>
             <p><a href="#">View on Spotify</a></p>
           </div>
-          <ul id="related-artists">
-            <li>
-              <h3>Full Name</h3>
-              <img class="thumb-image" src="#" alt="related artist image" />
-              <button>See</button>
-            </li>
-          </ul>
-          <ul id="top-songs">
-            <li>
-              <button>Play</button>
-              <p>Song Title</p>
-            </li>
-          </ul>
         </div>
-        <div class="right">
-          <div id="player"></div>
+        <div class="full group">
+          <div class="left">
+            <ul id="top-tracks">
+              <li>
+                <button>Play</button>
+                <p>Song Title</p>
+              </li>
+            </ul>
+          </div>
+          <div class="right">
+            <ul id="related-artists">
+              <li>
+                <h3>Full Name</h3>
+                <img class="thumb-image" src="" alt="related artist image" />
+                <button>See</button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

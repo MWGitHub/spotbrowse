@@ -49,7 +49,6 @@
   }
 
   function RelatedArtists() {
-    this._artists = [];
     this._root = document.getElementById(id);
     this._block = new app.Block();
     this._block.setBinder('artists', this._root, updaters.artists);
@@ -67,8 +66,6 @@
   };
 
   RelatedArtists.prototype._handleRelatedChange = function () {
-    this._root = document.getElementById(id);
-
     var artists = app.store.getRelatedArtists();
     this._block.updateProperties({
       artists: artists

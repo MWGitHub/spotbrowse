@@ -33,6 +33,14 @@ ul {
   list-style: none;
 }
 
+iframe {
+  border: 0;
+  margin: 0;
+  padding: 0;
+
+  height: 1rem;
+}
+
 .group:after {
   content: '';
   display: 'block';
@@ -43,14 +51,18 @@ ul {
   width: 100%;
 }
 
+.full {
+  width: 100%;
+}
+
 .left {
   float: left;
-  width: 70%;
+  width: 50%;
 }
 
 .right {
   float: left;
-  width: 30%;
+  width: 50%;
 }
 
 #primary-artist img {

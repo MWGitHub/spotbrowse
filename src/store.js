@@ -2,14 +2,19 @@
   var listeners = {};
 
   var primaryArtist = null;
-  var relatedArtists = null;
+  var relatedArtists = [];
+  var topTracks = [];
+  var playingTrackId = null;
 
   app.store = {
     types: {
       RECEIVE_PRIMARY_ARTIST: 'RECEIVE_PRIMARY_ARTIST',
       ERROR_PRIMARY_ARTISTS: 'ERROR_PRIMARY_ARTISTS',
       RECEIVE_RELATED_ARTISTS: 'RECEIVE_RELATED_ARTISTS',
-      ERROR_RELATED_ARTISTS: 'ERROR_RELATED_ARTISTS'
+      ERROR_RELATED_ARTISTS: 'ERROR_RELATED_ARTISTS',
+      RECEIVE_TOP_TRACKS: 'RECEIVE_TOP_TRACKS',
+      ERROR_TOP_TRACKS: 'ERROR_TOP_TRACKS',
+      PLAY_TRACK: 'PLAY_TRACK'
     },
 
     addListener: function (type, callback) {
@@ -27,6 +32,12 @@
           break;
         case types.RECEIVE_RELATED_ARTISTS:
           relatedArtists = data.artists;
+          break;
+        case types.RECEIVE_TOP_TRACKS:
+          topTracks = data.tracks;
+          break;
+        case types.PLAY_TRACK:
+          playingTrackId = data;
           break;
       }
 
@@ -52,6 +63,21 @@
         if (relatedArtists[i].id === id) return relatedArtists[i];
       }
       return null;
+    },
+
+    getTopTracks: function () {
+      return topTracks.slice();
+    },
+
+    getTrack: function (id) {
+      for (var i = 0; i < topTracks.length; ++i) {
+        if (topTracks[i].id === id) return topTracks[i];
+      }
+      return null;
+    },
+
+    getPlayingTrack: function () {
+      return app.store.getTrack(playingTrackId);
     }
   };
 })();
