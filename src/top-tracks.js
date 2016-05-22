@@ -57,6 +57,8 @@
       this._handleArtistChange.bind(this));
     store.addListener(store.types.RECEIVE_TOP_TRACKS,
       this._handleTracksChange.bind(this));
+
+    // TODO: Pause/Play button toggle
   }
 
   TopTracks.prototype._handleSwitching = function () {
