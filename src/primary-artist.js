@@ -1,5 +1,9 @@
 (function () {
   var updaters = {
+    loader: function (element, value) {
+
+    },
+
     artist: function (element, value) {
       element.textContent = value;
     },
@@ -42,18 +46,27 @@
   function PrimaryArtist(root) {
     this._block = new app.Block();
     this._root = root;
+    this._loader = app.elemental.create.loader();
 
     var bindPoints = wrap(this._root);
     for (var key in bindPoints) {
       this._block.setBinder(key, bindPoints[key], updaters[key]);
     }
 
+    app.store.addListener(app.store.types.SWITCHING_ARTIST,
+      this._handleSwitching.bind(this));
     app.store.addListener(app.store.types.RECEIVE_PRIMARY_ARTIST,
       this._handleArtistChange.bind(this));
   };
 
-  PrimaryArtist.prototype._handleArtistChange = function () {
+  PrimaryArtist.prototype._handleSwitching = function () {
     window.scrollTo(0, 0);
+    this._root.appendChild(this._loader);
+  };
+
+  PrimaryArtist.prototype._handleArtistChange = function () {
+    this._root.removeChild(this._loader);
+
     var data = app.store.getPrimaryArtist();
     var image = data.images.length > 0 ? data.images[0].url : '';
     this._block.updateProperties({

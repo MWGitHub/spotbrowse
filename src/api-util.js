@@ -38,6 +38,7 @@
 
     fetchArtist: function (id) {
       var uri = 'https://api.spotify.com/v1/artists/{id}';
+      app.store.receive(app.store.types.SWITCHING_ARTIST);
       request({
         url: parse(uri, { id: id }),
         onLoad: function (data) {

@@ -77,13 +77,20 @@
     this._root.addEventListener('touchend', handleRelatedClick);
     this._block = new app.Block();
     this._block.setBinder('artists', this._root, updaters.artists);
+    this._loader = app.elemental.create.loader();
 
     var store = app.store;
+    app.store.addListener(app.store.types.SWITCHING_ARTIST,
+      this._handleSwitching.bind(this));
     store.addListener(store.types.RECEIVE_PRIMARY_ARTIST,
       this._handleArtistChange.bind(this));
     store.addListener(store.types.RECEIVE_RELATED_ARTISTS,
       this._handleRelatedChange.bind(this));
   }
+
+  RelatedArtists.prototype._handleSwitching = function () {
+    this._root.appendChild(this._loader);
+  };
 
   RelatedArtists.prototype._handleArtistChange = function () {
     var artist = app.store.getPrimaryArtist();

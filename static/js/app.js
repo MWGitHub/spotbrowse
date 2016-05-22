@@ -42,6 +42,7 @@
 
     fetchArtist: function (id) {
       var uri = 'https://api.spotify.com/v1/artists/{id}';
+      app.store.receive(app.store.types.SWITCHING_ARTIST);
       request({
         url: parse(uri, { id: id }),
         onLoad: function (data) {
@@ -124,6 +125,23 @@
 
   app.Block = Block;
 })();
+/**
+ * Factory for creating components.
+ */
+(function () {
+  app.elemental = {
+    create: {
+      loader: function () {
+        var root = document.createElement('ul');
+        root.setAttribute('class', 'loader');
+        root.appendChild(document.createElement('li'));
+        root.appendChild(document.createElement('li'));
+
+        return root;
+      }
+    }
+  }
+})();
 (function () {
   app.main = {
     start: function () {
@@ -178,6 +196,10 @@
 })();
 (function () {
   var updaters = {
+    loader: function (element, value) {
+
+    },
+
     artist: function (element, value) {
       element.textContent = value;
     },
@@ -220,18 +242,27 @@
   function PrimaryArtist(root) {
     this._block = new app.Block();
     this._root = root;
+    this._loader = app.elemental.create.loader();
 
     var bindPoints = wrap(this._root);
     for (var key in bindPoints) {
       this._block.setBinder(key, bindPoints[key], updaters[key]);
     }
 
+    app.store.addListener(app.store.types.SWITCHING_ARTIST,
+      this._handleSwitching.bind(this));
     app.store.addListener(app.store.types.RECEIVE_PRIMARY_ARTIST,
       this._handleArtistChange.bind(this));
   };
 
-  PrimaryArtist.prototype._handleArtistChange = function () {
+  PrimaryArtist.prototype._handleSwitching = function () {
     window.scrollTo(0, 0);
+    this._root.appendChild(this._loader);
+  };
+
+  PrimaryArtist.prototype._handleArtistChange = function () {
+    this._root.removeChild(this._loader);
+
     var data = app.store.getPrimaryArtist();
     var image = data.images.length > 0 ? data.images[0].url : '';
     this._block.updateProperties({
@@ -324,13 +355,20 @@
     this._root.addEventListener('touchend', handleRelatedClick);
     this._block = new app.Block();
     this._block.setBinder('artists', this._root, updaters.artists);
+    this._loader = app.elemental.create.loader();
 
     var store = app.store;
+    app.store.addListener(app.store.types.SWITCHING_ARTIST,
+      this._handleSwitching.bind(this));
     store.addListener(store.types.RECEIVE_PRIMARY_ARTIST,
       this._handleArtistChange.bind(this));
     store.addListener(store.types.RECEIVE_RELATED_ARTISTS,
       this._handleRelatedChange.bind(this));
   }
+
+  RelatedArtists.prototype._handleSwitching = function () {
+    this._root.appendChild(this._loader);
+  };
 
   RelatedArtists.prototype._handleArtistChange = function () {
     var artist = app.store.getPrimaryArtist();
@@ -356,6 +394,7 @@
 
   app.store = {
     types: {
+      SWITCHING_ARTIST: 'SWITCHING_ARTIST',
       RECEIVE_PRIMARY_ARTIST: 'RECEIVE_PRIMARY_ARTIST',
       ERROR_PRIMARY_ARTISTS: 'ERROR_PRIMARY_ARTISTS',
       RECEIVE_RELATED_ARTISTS: 'RECEIVE_RELATED_ARTISTS',
@@ -479,13 +518,20 @@
     this._root = document.getElementById(id);
     this._block = new app.Block();
     this._block.setBinder('tracks', this._root, updaters.tracks);
+    this._loader = app.elemental.create.loader();
 
     var store = app.store;
+    app.store.addListener(app.store.types.SWITCHING_ARTIST,
+      this._handleSwitching.bind(this));
     store.addListener(store.types.RECEIVE_PRIMARY_ARTIST,
       this._handleArtistChange.bind(this));
     store.addListener(store.types.RECEIVE_TOP_TRACKS,
       this._handleTracksChange.bind(this));
   }
+
+  TopTracks.prototype._handleSwitching = function () {
+    this._root.appendChild(this._loader);
+  };
 
   TopTracks.prototype._handleArtistChange = function () {
     var artist = app.store.getPrimaryArtist();

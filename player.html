@@ -22,14 +22,18 @@
           },
 
           play: function () {
+            player.stop();
             if (track) {
               audioElement.play();
             }
+          },
+
+          stop: function () {
+            audioElement.pause();
           }
         };
 
         window.addEventListener('message', function (e) {
-          console.log(e);
           player.setTrack(e.data);
         });
       });

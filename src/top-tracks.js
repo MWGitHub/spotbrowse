@@ -48,13 +48,20 @@
     this._root = document.getElementById(id);
     this._block = new app.Block();
     this._block.setBinder('tracks', this._root, updaters.tracks);
+    this._loader = app.elemental.create.loader();
 
     var store = app.store;
+    app.store.addListener(app.store.types.SWITCHING_ARTIST,
+      this._handleSwitching.bind(this));
     store.addListener(store.types.RECEIVE_PRIMARY_ARTIST,
       this._handleArtistChange.bind(this));
     store.addListener(store.types.RECEIVE_TOP_TRACKS,
       this._handleTracksChange.bind(this));
   }
+
+  TopTracks.prototype._handleSwitching = function () {
+    this._root.appendChild(this._loader);
+  };
 
   TopTracks.prototype._handleArtistChange = function () {
     var artist = app.store.getPrimaryArtist();

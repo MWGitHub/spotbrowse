@@ -2,7 +2,7 @@
 
 prev=""
 while true; do
-  current=$(ls -l src suffix.js prefix.js)
+  current=$(ls -l src suffix.js prefix.js style)
   if [ "$prev" != "$current" ]; then
     date
     echo Files changed
