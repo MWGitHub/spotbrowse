@@ -18,13 +18,13 @@ Check it out at [www.mwguy.com.com/spotbrowse](http://www.mwguy.com/spotbrowse/)
 * Return to the currently playing artist
 
 ###Usage
-To build the project run the following script in the cloned directory:
+To build the project run the following script in the cloned directory:  
 `./build.sh`
 
-To watch for changes and automatically build run this command in the cloned directory:
+To watch for changes and automatically build run this command in the cloned directory:  
 `./watch.sh`
 
-Open index.html in the browser to see the page.
+Open index.html in the browser to load the page.
 
 ###TODO
 - [ ] Allow navigation history for back and forward
