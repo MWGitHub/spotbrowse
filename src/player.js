@@ -3,7 +3,11 @@
 
   var updaters = {
     player: function (element, value) {
-      element.setAttribute('src', value);
+      // var src = 'https://embed.spotify.com/?uri=' + value;
+      // src += '&view=coverart'
+      // element.setAttribute('src', src);
+      var playerFrame = document.getElementById(id);
+      playerFrame.contentWindow.postMessage(value.preview_url, '*');
     }
   }
 
@@ -19,13 +23,13 @@
   }
 
   Player.prototype._handleChange = function () {
-    this._root.setAttribute('src', '');
+    // this._root.setAttribute('src', '');
   };
 
   Player.prototype._handlePlay = function () {
     var track = app.store.getPlayingTrack();
     this._block.updateProperties({
-      player: track.preview_url
+      player: track
     });
   };
 

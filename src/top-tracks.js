@@ -3,7 +3,6 @@
 
   function handleTrackClick(id) {
     return function (e) {
-      console.log(id);
       app.apiUtil.playTrack(id);
     };
   }
@@ -29,16 +28,18 @@
 
   function create(track) {
     var list = document.createElement('li');
-    var name = document.createElement('p');
-    name.textContent = track.name;
-    list.appendChild(name);
+    list.setAttribute('class', 'group');
 
     var play = document.createElement('button');
-    play.textContent = 'Play';
+    play.innerHTML = '&#9658;';
     var clickFunction = handleTrackClick(track.id);
     play.addEventListener('click', clickFunction);
     play.addEventListener('touchend', clickFunction);
     list.appendChild(play);
+
+    var name = document.createElement('p');
+    name.textContent = track.name;
+    list.appendChild(name);
 
     return list;
   }

@@ -2,36 +2,59 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Spotbrowse</title>
     <link rel="stylesheet" href="static/css/main.css">
   </head>
   <body>
     <div class="wrapper">
       <div class="content group">
-        <iframe id="player" class="full"></iframe>
-        <div class="full group">
-          <div id="primary-artist">
-            <h1>Full Name</h1>
-            <img class="large-image" src="" alt="primary artist image" />
-            <p>0 followers</p>
-            <p><a href="#">View on Spotify</a></p>
+        <div class="full header group">
+          <div class="title">
+            <h2><a href="index.html">SpotBrowse</a></h2>
+          </div>
+          <iframe src="player.html" id="player" class="player" frameborder="0" allowtransparency="true"></iframe>
+        </div>
+
+        <div class="full">
+          <div id="primary-artist" class="primary-artist group">
+            <div class="primary-artist-left">
+              <div class="artist-image-container">
+                <img src="" alt="primary artist image" />
+              </div>
+            </div>
+
+            <div class="primary-artist-right">
+              <p class="artist-meta artist-tag">Artist</p>
+              <h1 class="artist-name">Full Name</h1>
+              <p class="artist-meta artist-followers">0 followers</p>
+              <p><a class="artist-meta artist-link" href="#">View on Spotify</a></p>
+            </div>
           </div>
         </div>
+
         <div class="full group">
           <div class="left">
-            <ul id="top-tracks">
-              <li>
-                <button>Play</button>
+            <h2 class="column-title">Top Tracks</h2>
+            <ul id="top-tracks" class="top-tracks">
+              <li class="group">
+                <button>&#9658;</button>
                 <p>Song Title</p>
               </li>
             </ul>
           </div>
+
           <div class="right">
-            <ul id="related-artists">
-              <li>
-                <h3>Full Name</h3>
-                <img class="thumb-image" src="" alt="related artist image" />
-                <button>See</button>
+            <h2 class="column-title">Related Artists</h2>
+            <ul id="related-artists" class="related-artists group">
+              <li class="group">
+                <div class="related-artists-image-container">
+                  <img src="" alt="related artist image" />
+                </div>
+                <div class="related-artists-info">
+                  <p>Full Name</p>
+                  <button>See</button>
+                </div>
               </li>
             </ul>
           </div>

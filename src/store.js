@@ -34,7 +34,7 @@
           relatedArtists = data.artists;
           break;
         case types.RECEIVE_TOP_TRACKS:
-          topTracks = data.tracks;
+          topTracks = data.tracks.slice(0, 10);
           break;
         case types.PLAY_TRACK:
           playingTrackId = data;

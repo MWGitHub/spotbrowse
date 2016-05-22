@@ -3,6 +3,7 @@ html, body, div {
 
   margin: 0;
   padding: 0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6, p {
@@ -23,8 +24,8 @@ a:focus {
 
 img {
   border: 0;
-  max-width: 100%;
   display: block;
+  max-width: 100%;
 }
 
 ul {
@@ -37,14 +38,25 @@ iframe {
   border: 0;
   margin: 0;
   padding: 0;
+}
 
-  height: 1rem;
+body {
+  background-color: #111;
+  color: #f9f9f9;
+}
+
+/**
+ * General Layout
+ */
+
+.content {
+  padding: 0.75rem 1.5rem;
 }
 
 .group:after {
-  content: '';
-  display: 'block';
-  clear: both;
+ content: '';
+ display: block;
+ clear: both;
 }
 
 .wrapper {
@@ -65,6 +77,227 @@ iframe {
   width: 50%;
 }
 
-#primary-artist img {
-  width: 10rem;
+.column-title {
+  font-size: 0.9rem;
+  letter-spacing: 0.08rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  width: 100%;
+  font-weight: 400;
+  color: #cdcaca;
+}
+
+@media (max-width: 425px) {
+  .left {
+    width: 100%;
+  }
+
+  .right {
+    width: 100%;
+  }
+
+  .column-title {
+    text-align: center;
+  }
+}
+
+/**
+ * Header
+ */
+
+.header {
+  margin-bottom: 1rem;
+}
+
+.title {
+  float: left;
+}
+
+.title h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.player {
+  float: left;
+  height: 2rem;
+}
+
+/**
+ * Primary Artist
+ */
+.primary-artist {
+  margin-bottom: 1rem;
+}
+
+.primary-artist-left {
+  float: left;
+  margin-right: 2rem;
+}
+
+.artist-image-container {
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.primary-artist-left img {
+  min-width: 100%;
+  min-height: 100%;
+  opacity: 0;
+}
+
+.primary-artist-right {
+  float: left;
+  margin-top: 1.5rem;
+}
+
+.artist-meta {
+  letter-spacing: 0.08rem;
+  font-size: 0.7rem;
+  color: #cdcaca;
+}
+
+.artist-tag {
+  text-transform: uppercase;
+}
+
+.artist-name {
+  font-weight: 100;
+  font-size: 3rem;
+}
+
+.artist-followers {
+  margin-bottom: 0.8rem;
+}
+
+.artist-link {
+  text-transform: uppercase;
+  display: inline-block;
+  color: #fff;
+  background-color: #1DB954;
+  padding: 0.3rem 1rem;
+  border-radius: 1rem;
+}
+
+.artist-link:hover {
+  background-color: #1ED760;
+}
+
+@media (max-width: 425px) {
+  .primary-artist {
+    text-align: center;
+  }
+
+  .primary-artist-left {
+    width: 100%;
+    margin: 0 0 1rem 0;
+  }
+
+  .artist-image-container {
+    margin: 0 auto;
+  }
+
+  .primary-artist-right {
+    width: 100%;
+    margin: 0 0 1rem 0;
+  }
+}
+
+/**
+ * Top Tracks
+ */
+.top-tracks li {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.top-tracks button {
+  float: left;
+  width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1.6;
+  padding-left: 0.45rem;
+  margin-right: 1rem;
+  font-size: 0.85rem;
+  border-radius: 50%;
+  border: 0;
+  outline: 0;
+  background-color: #1DB954;
+  color: #fff;
+}
+
+.top-tracks button:hover {
+  background-color: #1ED760;
+}
+
+.top-tracks p {
+  float: left;
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
+/**
+ * Related Artists
+ */
+.related-artists li {
+  float: left;
+  width: 50%;
+  margin-bottom: 1rem;
+}
+
+.related-artists-image-container {
+  float: left;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  margin-right: 1rem;
+}
+
+.related-artists img {
+  min-width: 100%;
+  min-height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.related-artists-info {
+  float: left;
+}
+
+.related-artists-info p {
+  font-size: 0.85rem;
+  line-height: 1.75;
+  cursor: pointer;
+}
+
+.related-artists-info button {
+  padding: 0.05rem 0.5rem;
+  margin: 0;
+  font-size: 0.6rem;
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #333;
+  outline: 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  border-radius: 1rem;
+}
+
+.related-artists-info button:hover {
+  background-color: #666;
+  border: 1px solid #666;
+}
+
+@media (max-width: 425px) {
+  .related-artists li {
+    width: 100%;
+  }
 }

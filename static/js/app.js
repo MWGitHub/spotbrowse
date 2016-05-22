@@ -128,7 +128,9 @@
   app.main = {
     start: function () {
       var apiUtil = app.apiUtil;
-      var primaryArtist = new app.PrimaryArtist();
+      var primaryArtist = new app.PrimaryArtist(
+        document.getElementById('primary-artist')
+      );
       var relatedArtists = new app.RelatedArtists();
       var topTracks = new app.TopTracks();
       var player = new app.Player();
@@ -142,7 +144,11 @@
 
   var updaters = {
     player: function (element, value) {
-      element.setAttribute('src', value);
+      // var src = 'https://embed.spotify.com/?uri=' + value;
+      // src += '&view=coverart'
+      // element.setAttribute('src', src);
+      var playerFrame = document.getElementById(id);
+      playerFrame.contentWindow.postMessage(value.preview_url, '*');
     }
   }
 
@@ -158,24 +164,26 @@
   }
 
   Player.prototype._handleChange = function () {
-    this._root.setAttribute('src', '');
+    // this._root.setAttribute('src', '');
   };
 
   Player.prototype._handlePlay = function () {
     var track = app.store.getPlayingTrack();
     this._block.updateProperties({
-      player: track.preview_url
+      player: track
     });
   };
 
   app.Player = Player;
 })();
 (function () {
-  var id = 'primary-artist';
-
   var updaters = {
     artist: function (element, value) {
       element.textContent = value;
+    },
+
+    imageContainer: function (element, value) {
+      element.style['background-image'] = 'url(' + value + ')';
     },
 
     image: function (element, value, properties) {
@@ -193,51 +201,43 @@
     }
   }
 
-  function create(root) {
-    var artist = document.createElement('h1');
-    root.appendChild(artist);
-    var image = document.createElement('img');
-    root.appendChild(image);
-    var followers = document.createElement('p');
-    root.appendChild(followers);
-    var viewWrapper = document.createElement('p');
-    root.appendChild(viewWrapper);
-    var view = document.createElement('a');
-    view.textContent = 'View on Spotify';
-    viewWrapper.appendChild(view);
+  function wrap(root) {
+    var artist = root.getElementsByClassName('artist-name')[0];
+    var imageContainer = root.getElementsByClassName('artist-image-container')[0];
+    var image = root.getElementsByTagName('img')[0];
+    var followers = root.getElementsByClassName('artist-followers')[0];
+    var view = root.getElementsByClassName('artist-link')[0];
 
     return {
       artist: artist,
+      imageContainer: imageContainer,
       image: image,
       followers: followers,
       view: view
     };
   }
 
-  function PrimaryArtist() {
+  function PrimaryArtist(root) {
     this._block = new app.Block();
-    this._root = null;
+    this._root = root;
+
+    var bindPoints = wrap(this._root);
+    for (var key in bindPoints) {
+      this._block.setBinder(key, bindPoints[key], updaters[key]);
+    }
 
     app.store.addListener(app.store.types.RECEIVE_PRIMARY_ARTIST,
       this._handleArtistChange.bind(this));
   };
 
   PrimaryArtist.prototype._handleArtistChange = function () {
-    // Create the element on first set
-    if (!this._root) {
-      this._root = document.getElementById(id);
-      app.util.removeAllChildren(this._root);
-
-      var bindPoints = create(this._root);
-      for (var key in bindPoints) {
-        this._block.setBinder(key, bindPoints[key], updaters[key]);
-      }
-    }
-
+    window.scrollTo(0, 0);
     var data = app.store.getPrimaryArtist();
+    var image = data.images.length > 0 ? data.images[0].url : '';
     this._block.updateProperties({
       artist: data.name,
-      image: data.images[0].url,
+      imageContainer: image,
+      image: image,
       followers: data.followers.total,
       view: data.external_urls.spotify
     });
@@ -247,6 +247,7 @@
 })();
 (function () {
   var id = 'related-artists';
+  var idNamespace = 'related-artists-item-id';
 
   function handleArtistClick(id) {
     return function (e) {
@@ -275,28 +276,52 @@
 
   function create(artist) {
     var list = document.createElement('li');
-    var name = document.createElement('p');
-    name.textContent = artist.name;
-    list.appendChild(name);
+    list.setAttribute('id', idNamespace + '.' + artist.id);
+    list.setAttribute('class', 'group');
 
+    var imageContainer = document.createElement('div');
+    imageContainer.setAttribute('class', 'related-artists-image-container');
+    list.appendChild(imageContainer);
     var image = document.createElement('img');
     var images = artist.images;
-    image.setAttribute('src', images[images.length - 1].url);
+    var imageURL = images.length > 0 ? images[images.length - 1].url : '';
+    imageContainer.style['background-image'] = 'url(' + imageURL + ')';
+    image.setAttribute('src', imageURL);
     image.setAttribute('alt', 'related artist image');
-    list.appendChild(image);
+    imageContainer.appendChild(image);
+
+    var infoContainer = document.createElement('div');
+    infoContainer.setAttribute('class', 'related-artists-info');
+    list.appendChild(infoContainer);
+
+    var name = document.createElement('p');
+    name.textContent = artist.name;
+    infoContainer.appendChild(name);
 
     var see = document.createElement('button');
     see.textContent = 'See';
-    var clickFunction = handleArtistClick(artist.id);
-    see.addEventListener('click', clickFunction);
-    see.addEventListener('touchend', clickFunction);
-    list.appendChild(see);
+    infoContainer.appendChild(see);
 
     return list;
   }
 
+  function handleRelatedClick(e) {
+    var target = e.target;
+    if (target.tagName === 'LI' || target.tagName === 'DIV') {
+      return;
+    }
+
+    var match = app.util.getFirstMatching(target, idNamespace);
+
+    if (match) {
+      app.apiUtil.fetchArtist(match);
+    }
+  }
+
   function RelatedArtists() {
     this._root = document.getElementById(id);
+    this._root.addEventListener('click', handleRelatedClick);
+    this._root.addEventListener('touchend', handleRelatedClick);
     this._block = new app.Block();
     this._block.setBinder('artists', this._root, updaters.artists);
 
@@ -357,7 +382,7 @@
           relatedArtists = data.artists;
           break;
         case types.RECEIVE_TOP_TRACKS:
-          topTracks = data.tracks;
+          topTracks = data.tracks.slice(0, 10);
           break;
         case types.PLAY_TRACK:
           playingTrackId = data;
@@ -409,7 +434,6 @@
 
   function handleTrackClick(id) {
     return function (e) {
-      console.log(id);
       app.apiUtil.playTrack(id);
     };
   }
@@ -435,16 +459,18 @@
 
   function create(track) {
     var list = document.createElement('li');
-    var name = document.createElement('p');
-    name.textContent = track.name;
-    list.appendChild(name);
+    list.setAttribute('class', 'group');
 
     var play = document.createElement('button');
-    play.textContent = 'Play';
+    play.innerHTML = '&#9658;';
     var clickFunction = handleTrackClick(track.id);
     play.addEventListener('click', clickFunction);
     play.addEventListener('touchend', clickFunction);
     list.appendChild(play);
+
+    var name = document.createElement('p');
+    name.textContent = track.name;
+    list.appendChild(name);
 
     return list;
   }
@@ -476,12 +502,13 @@
   app.TopTracks = TopTracks;
 })();
 (function () {
+
   app.util = {
     /**
      * Merges two objects with the second overwriting similar properties and
      * returns a new object.
      */
-    merge(obj1, obj2) {
+    merge: function (obj1, obj2) {
       var obj = {};
       var key;
       for (key in obj1) {
@@ -496,10 +523,29 @@
     /**
      * Removes all children from an element.
      */
-    removeAllChildren(element) {
+    removeAllChildren: function (element) {
       while (element.firstChild) {
         element.removeChild(element.firstChild);
       }
+    },
+
+    /**
+     * Finds the first matching element with the given id namespace.
+     * @return {string} the id without the namespace or null if none found.
+     */
+    getFirstMatching: function (element, namespace) {
+      var current = element;
+      while (current) {
+        if (current.id) {
+          var split = current.id.split('.');
+          if (split[0] === namespace) {
+            return split[1];
+          }
+        }
+
+        current = current.parentNode;
+      };
+      return null;
     }
   };
 })();

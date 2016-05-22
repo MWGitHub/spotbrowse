@@ -1,5 +1,6 @@
 (function () {
   var id = 'related-artists';
+  var idNamespace = 'related-artists-item-id';
 
   function handleArtistClick(id) {
     return function (e) {
@@ -28,28 +29,52 @@
 
   function create(artist) {
     var list = document.createElement('li');
-    var name = document.createElement('p');
-    name.textContent = artist.name;
-    list.appendChild(name);
+    list.setAttribute('id', idNamespace + '.' + artist.id);
+    list.setAttribute('class', 'group');
 
+    var imageContainer = document.createElement('div');
+    imageContainer.setAttribute('class', 'related-artists-image-container');
+    list.appendChild(imageContainer);
     var image = document.createElement('img');
     var images = artist.images;
-    image.setAttribute('src', images[images.length - 1].url);
+    var imageURL = images.length > 0 ? images[images.length - 1].url : '';
+    imageContainer.style['background-image'] = 'url(' + imageURL + ')';
+    image.setAttribute('src', imageURL);
     image.setAttribute('alt', 'related artist image');
-    list.appendChild(image);
+    imageContainer.appendChild(image);
+
+    var infoContainer = document.createElement('div');
+    infoContainer.setAttribute('class', 'related-artists-info');
+    list.appendChild(infoContainer);
+
+    var name = document.createElement('p');
+    name.textContent = artist.name;
+    infoContainer.appendChild(name);
 
     var see = document.createElement('button');
     see.textContent = 'See';
-    var clickFunction = handleArtistClick(artist.id);
-    see.addEventListener('click', clickFunction);
-    see.addEventListener('touchend', clickFunction);
-    list.appendChild(see);
+    infoContainer.appendChild(see);
 
     return list;
   }
 
+  function handleRelatedClick(e) {
+    var target = e.target;
+    if (target.tagName === 'LI' || target.tagName === 'DIV') {
+      return;
+    }
+
+    var match = app.util.getFirstMatching(target, idNamespace);
+
+    if (match) {
+      app.apiUtil.fetchArtist(match);
+    }
+  }
+
   function RelatedArtists() {
     this._root = document.getElementById(id);
+    this._root.addEventListener('click', handleRelatedClick);
+    this._root.addEventListener('touchend', handleRelatedClick);
     this._block = new app.Block();
     this._block.setBinder('artists', this._root, updaters.artists);
 
