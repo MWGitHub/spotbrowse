@@ -167,7 +167,8 @@
   var MESSAGE_TYPES = {
     PLAY: 'PLAY',
     PAUSE: 'PAUSE',
-    DONE: 'DONE'
+    DONE: 'DONE',
+    CHANGE_ARTIST: 'CHANGE_ARTIST'
   }
 
   function Player() {
@@ -200,19 +201,28 @@
   Player.prototype._handleMessage = function (e) {
     var data = e.data;
     switch (data.type) {
-      case 'PLAY':
+      case MESSAGE_TYPES.PLAY:
+        app.apiUtil.playTrack(app.store.getPlayingTrack());
         break;
-      case 'PAUSE':
+      case MESSAGE_TYPES.PAUSE:
+        app.apiUtil.pauseTrack(app.store.getPlayingTrack());
+        break;
+      case MESSAGE_TYPES.DONE:
+        app.apiUtil.pauseTrack(app.store.getPlayingTrack());
+        break;
+      case MESSAGE_TYPES.CHANGE_ARTIST:
+        // Only change if primary is different
+        if (app.store.getPrimaryArtist().id === data.id) {
+          return;
+        }
+        
+        app.apiUtil.fetchArtist(data.id);
         break;
     }
-    // this._root.setAttribute('src', '');
-    // console.log(e);
-    this._port.postMessage('another');
   };
 
   Player.prototype._handlePlay = function () {
     var track = app.store.getPlayingTrack();
-    console.log(track);
     this._port.postMessage({
       type: MESSAGE_TYPES.PLAY,
       track: track
@@ -369,6 +379,11 @@
   }
 
   function handleRelatedClick(e) {
+    if (app.toucher.recentlyTouched()) {
+      return;
+    }
+    app.toucher.touch();
+
     var target = e.target;
     if (target.tagName === 'LI' || target.tagName === 'DIV') {
       return;
@@ -422,7 +437,7 @@
   var primaryArtist = null;
   var relatedArtists = [];
   var topTracks = [];
-  var currentTrackId = null;
+  var currentTrack = null;
   var isTrackPlaying = false;
 
   app.store = {
@@ -459,7 +474,7 @@
           break;
         case types.PLAY_TRACK:
           isTrackPlaying = true;
-          currentTrackId = data;
+          currentTrack = data;
           break;
         case types.PAUSE_TRACK:
           isTrackPlaying = false;
@@ -502,11 +517,11 @@
     },
 
     getPlayingTrackId: function () {
-      return currentTrackId;
+      return currentTrack.id;
     },
 
     getPlayingTrack: function () {
-      return app.store.getTrack(app.store.getPlayingTrackId());
+      return currentTrack;
     },
 
     getIsTrackPlaying: function () {
@@ -555,6 +570,11 @@
   }
 
   function handleTrackClick(e) {
+    if (app.toucher.recentlyTouched()) {
+      return;
+    }
+    app.toucher.touch();
+
     var target = e.target;
     if (target.tagName !== 'BUTTON') {
       return;
@@ -563,11 +583,12 @@
     var match = app.util.getFirstMatching(target, idNamespace);
 
     if (match) {
-      var current = app.store.getPlayingTrackId();
-      if (app.store.getIsTrackPlaying() && current === match) {
-        app.apiUtil.pauseTrack(match);
+      var current = app.store.getPlayingTrack();
+      var next = app.store.getTrack(match);
+      if (app.store.getIsTrackPlaying() && current.id === next.id) {
+        app.apiUtil.pauseTrack(next);
       } else {
-        app.apiUtil.playTrack(match);
+        app.apiUtil.playTrack(next);
       }
     }
   }
@@ -631,6 +652,9 @@
     }
   };
 
+  /**
+   * Pause the current playing track.
+   */
   TopTracks.prototype._handlePauseTrack = function () {
     var current = app.store.getPlayingTrackId();
     var tracks = this._root.children;
@@ -646,6 +670,23 @@
   };
 
   app.TopTracks = TopTracks;
+})();
+/**
+ * Prevent touch and click emulation from both occuring.
+ */
+(function () {
+  var lastClickTouch = Date.now();
+  var grace = 10;
+
+  app.toucher = {
+    touch: function () {
+      lastClickTouch = Date.now();
+    },
+
+    recentlyTouched: function () {
+      return Date.now() - lastClickTouch <= grace;
+    }
+  }
 })();
 (function () {
 

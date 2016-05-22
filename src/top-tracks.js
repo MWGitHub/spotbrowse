@@ -39,6 +39,11 @@
   }
 
   function handleTrackClick(e) {
+    if (app.toucher.recentlyTouched()) {
+      return;
+    }
+    app.toucher.touch();
+
     var target = e.target;
     if (target.tagName !== 'BUTTON') {
       return;
@@ -47,11 +52,12 @@
     var match = app.util.getFirstMatching(target, idNamespace);
 
     if (match) {
-      var current = app.store.getPlayingTrackId();
-      if (app.store.getIsTrackPlaying() && current === match) {
-        app.apiUtil.pauseTrack(match);
+      var current = app.store.getPlayingTrack();
+      var next = app.store.getTrack(match);
+      if (app.store.getIsTrackPlaying() && current.id === next.id) {
+        app.apiUtil.pauseTrack(next);
       } else {
-        app.apiUtil.playTrack(match);
+        app.apiUtil.playTrack(next);
       }
     }
   }
@@ -115,6 +121,9 @@
     }
   };
 
+  /**
+   * Pause the current playing track.
+   */
   TopTracks.prototype._handlePauseTrack = function () {
     var current = app.store.getPlayingTrackId();
     var tracks = this._root.children;

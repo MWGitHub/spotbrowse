@@ -4,7 +4,7 @@
   var primaryArtist = null;
   var relatedArtists = [];
   var topTracks = [];
-  var currentTrackId = null;
+  var currentTrack = null;
   var isTrackPlaying = false;
 
   app.store = {
@@ -41,7 +41,7 @@
           break;
         case types.PLAY_TRACK:
           isTrackPlaying = true;
-          currentTrackId = data;
+          currentTrack = data;
           break;
         case types.PAUSE_TRACK:
           isTrackPlaying = false;
@@ -84,11 +84,11 @@
     },
 
     getPlayingTrackId: function () {
-      return currentTrackId;
+      return currentTrack.id;
     },
 
     getPlayingTrack: function () {
-      return app.store.getTrack(app.store.getPlayingTrackId());
+      return currentTrack;
     },
 
     getIsTrackPlaying: function () {

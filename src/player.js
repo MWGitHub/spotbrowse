@@ -4,7 +4,8 @@
   var MESSAGE_TYPES = {
     PLAY: 'PLAY',
     PAUSE: 'PAUSE',
-    DONE: 'DONE'
+    DONE: 'DONE',
+    CHANGE_ARTIST: 'CHANGE_ARTIST'
   }
 
   function Player() {
@@ -37,19 +38,28 @@
   Player.prototype._handleMessage = function (e) {
     var data = e.data;
     switch (data.type) {
-      case 'PLAY':
+      case MESSAGE_TYPES.PLAY:
+        app.apiUtil.playTrack(app.store.getPlayingTrack());
         break;
-      case 'PAUSE':
+      case MESSAGE_TYPES.PAUSE:
+        app.apiUtil.pauseTrack(app.store.getPlayingTrack());
+        break;
+      case MESSAGE_TYPES.DONE:
+        app.apiUtil.pauseTrack(app.store.getPlayingTrack());
+        break;
+      case MESSAGE_TYPES.CHANGE_ARTIST:
+        // Only change if primary is different
+        if (app.store.getPrimaryArtist().id === data.id) {
+          return;
+        }
+        
+        app.apiUtil.fetchArtist(data.id);
         break;
     }
-    // this._root.setAttribute('src', '');
-    // console.log(e);
-    this._port.postMessage('another');
   };
 
   Player.prototype._handlePlay = function () {
     var track = app.store.getPlayingTrack();
-    console.log(track);
     this._port.postMessage({
       type: MESSAGE_TYPES.PLAY,
       track: track

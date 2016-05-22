@@ -59,6 +59,11 @@
   }
 
   function handleRelatedClick(e) {
+    if (app.toucher.recentlyTouched()) {
+      return;
+    }
+    app.toucher.touch();
+
     var target = e.target;
     if (target.tagName === 'LI' || target.tagName === 'DIV') {
       return;

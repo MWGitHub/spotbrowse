@@ -3,25 +3,155 @@
   <head>
     <meta charset="utf-8">
     <title>Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spotbrowse</title>
+    <link rel="stylesheet" href="static/css/main.css">
+
+    <style>
+      body {
+        background-color: transparent;
+        color: #000;
+        overflow: hidden;
+      }
+
+      .audio-disabler {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        content: '';
+      }
+
+      .audio-info {
+        float: right;
+        margin-right: 0.25rem;
+        margin-top: 0.25rem;
+      }
+
+      .audio-info p {
+        font-size: 0.7rem;
+      }
+
+      .audio-player {
+        float: right;
+        margin-top: 0.2rem;
+      }
+
+      .audio-player button {
+        background-color: transparent;
+        width: 1.5rem;
+        margin: -0.05rem 0.25rem 0 0;
+        padding: 0;
+        outline: 0;
+        border: 0;
+        cursor: pointer;
+        font-size: 1rem;
+        float: left;
+      }
+
+      .audio-player button:hover {
+        color: #444;
+      }
+
+      button.audio-neutral {
+
+      }
+
+      button.audio-playing {
+        margin-top: -0.12rem;
+      }
+
+      .audio-progress {
+        float: left;
+        background-color: #555;
+        width: 15rem;
+        height: 0.9rem;
+        border-radius: 1rem;
+        cursor: pointer;
+      }
+
+      .audio-cursor {
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 50%;
+        background-color: #000;
+        cursor: pointer;
+      }
+
+      .audio-info p {
+        cursor: pointer;
+      }
+
+      .audio-info p:hover {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 440px) {
+        .audio-wrapper {
+          text-align: center;
+        }
+
+        .audio-player {
+          width: 100%;
+        }
+
+        .audio-progress {
+          width: calc(100% - 2rem);
+        }
+
+        .audio-info {
+          width: 100%;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div class="audio-wrapper">
-      <audio id="audio"></audio>
+    <div class="audio-wrapper container full group">
+      <div id="disabler" class="audio-disabler"></div>
+      <div class="audio-player group">
+        <button id="play-button" class="audio-neutral">&#9658;</button>
+        <div id="progress" class="audio-progress">
+          <div id="cursor" class="audio-cursor"></div>
+        </div>
+        <audio id="audio"></audio>
+      </div>
+      <div class="audio-info">
+        <p id="info">No track currently playing</p>
+      </div>
     </div>
 
     <script type="text/javascript">
       document.addEventListener('DOMContentLoaded', function () {
+        var lastClickTouch = Date.now();
+        var grace = 10;
+        function allowTouch() {
+          var isAllowed = Date.now() - lastClickTouch >= grace;
+          lastClickTouch = Date.now();
+          return isAllowed;
+        }
+
         var track = null;
-        var isFinishedPlaying = false;
+        var isPlaying = false;
         var port = null;
         var audioElement = document.getElementById('audio');
+        var playButton = document.getElementById('play-button');
+        var progress = document.getElementById('progress');
+        var cursor = document.getElementById('cursor');
+        var info = document.getElementById('info');
 
+        // Player that handles audio playback
         var player = {
           setTrack: function (inputTrack) {
+            var disabler = document.getElementById('disabler');
+            if (disabler) {
+              disabler.parentNode.removeChild(disabler);
+            }
+
             // Check if should resume
-            if (track && track.id === inputTrack.id && !isFinishedPlaying) {
-            } else {
-              isFinishedPlaying = false;
+            var isFinished = !track ? false : audioElement.currentTime >= audioElement.duration;
+            var shouldResume = track && track.id === inputTrack.id && !isFinished;
+            if (!shouldResume) {
               audioElement.setAttribute('src', inputTrack.preview_url);
             }
             track = inputTrack;
@@ -30,24 +160,156 @@
           play: function () {
             player.pause();
             if (track) {
+              isPlaying = true;
+              // Update the play button
+              playButton.innerHTML = '&#10073;&#10073;';
+              playButton.setAttribute('class', 'audio-playing');
+
+              // Update the artist info
+              var artist = '';
+              if (track.artists.length > 0) {
+                artist = ' - ' + track.artists[0].name;
+              }
+              info.textContent = track.name + artist;
+
               audioElement.play();
             }
           },
 
           pause: function () {
+            isPlaying = false;
+            playButton.innerHTML = '&#9658;';
+            playButton.setAttribute('class', 'audio-neutral');
             audioElement.pause();
           }
         };
 
+        // Signal to pause when the track finishes playing
         audioElement.addEventListener('ended', function () {
-          isFinishedPlaying = true;
           port.postMessage({ type: 'DONE' });
           player.pause();
         });
 
+        function getProgressWidth() {
+          return progress.offsetWidth - cursor.offsetWidth;
+        }
+
+        // Update the cursor position
+        function updateCursor(e) {
+          var margin = (e.target.currentTime / e.target.duration) *
+            getProgressWidth();
+          cursor.style.marginLeft = margin + 'px';
+        }
+        audioElement.addEventListener('timeupdate', updateCursor);
+
+        // Retrieve the percent based on the x location and progress start x
+        function progressPercent(x) {
+          return (x - progress.offsetLeft) / getProgressWidth();
+        }
+
+        // Move the cursor to the given position
+        function moveCursor(x) {
+          var margin = x - progress.offsetLeft;
+          if (margin >= 0 && margin <= getProgressWidth()) {
+            cursor.style.marginLeft = margin + 'px';
+          }
+          // Prevent from going out of bounds
+          if (margin < 0) {
+            cursor.style.marginLeft = '0px';
+          }
+          if (margin > getProgressWidth()) {
+            cursor.style.marginLeft = getProgressWidth() + 'px';
+          }
+        }
+
+        function handleProgressClick(e) {
+          if (!allowTouch()) return;
+
+          if (!track) return;
+
+          // Center the cursor on the mouse
+          var x = 0;
+          if (e instanceof TouchEvent) {
+            x = e.changedTouches[0].pageX;
+          } else {
+            x = e.pageX - cursor.offsetWidth / 2;
+          }
+          moveCursor(x);
+          audioElement.currentTime = audioElement.duration * progressPercent(x);
+        }
+
+        progress.addEventListener('click', handleProgressClick);
+        progress.addEventListener('touchend', handleProgressClick);
+
+        // Handle dragging
+        var isDragging = false;
+        function handleDrag(e) {
+          if (!isDragging) return;
+
+          var x = 0;
+          if (e instanceof TouchEvent) {
+            x = e.changedTouches[0].pageX;
+          } else {
+            x = e.pageX - cursor.offsetWidth / 2;
+          }
+          moveCursor(x);
+        }
+
+        function handleStartDrag(e) {
+          if (!track) return;
+
+          isDragging = true;
+          window.addEventListener('mousemove', handleDrag);
+          audioElement.removeEventListener('timeupdate', updateCursor);
+        }
+
+        function handleEndDrag(e) {
+          if (!track) return;
+          if (!isDragging) return;
+
+          isDragging = false;
+          window.removeEventListener('mousemove', handleDrag);
+          audioElement.addEventListener('timeupdate', updateCursor);
+
+          var x = e.pageX - cursor.offsetWidth / 2;
+          audioElement.currentTime = audioElement.duration * progressPercent(x);
+          moveCursor(x);
+        }
+
+        cursor.addEventListener('mousedown', handleStartDrag);
+        window.addEventListener('mouseup', handleEndDrag);
+
+        // Handle clicking artist info
+        function handleInfoClick(e) {
+          if (!allowTouch()) return;
+
+          if (!track) return;
+
+          port.postMessage({ type: 'CHANGE_ARTIST', id: track.artists[0].id });
+        }
+
+        info.addEventListener('click', handleInfoClick);
+        info.addEventListener('touchend', handleInfoClick);
+
+        // Handle playing and pausing depending on the state
+        function handlePlayClick(e) {
+          if (!allowTouch()) return;
+
+          if (!track) return;
+
+          if (isPlaying) {
+            port.postMessage({ type: 'PAUSE' });
+          } else {
+            port.postMessage({ type: 'PLAY' });
+          }
+        }
+
+        playButton.addEventListener('click', handlePlayClick);
+        playButton.addEventListener('touchend', handlePlayClick);
+
+        // Connect with the main frame
         function handleMessage(e) {
           var data = e.data;
-          console.log(data);
           switch (data.type) {
             case 'PLAY':
               player.setTrack(data.track);

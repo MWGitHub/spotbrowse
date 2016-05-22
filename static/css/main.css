@@ -112,6 +112,7 @@ body {
  */
 
 .content {
+  margin-top: 2rem;
   padding: 0.75rem 1.5rem;
 }
 
@@ -174,21 +175,48 @@ body {
  */
 
 .header {
-  margin-bottom: 1rem;
+  position: fixed;
+  background-color: #fff;
+  color: #000;
+  z-index: 5000;
+  padding: 0.25rem;
+  top: 0;
 }
 
 .title {
   float: left;
+  width: 30%;
 }
 
 .title h2 {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 700;
 }
 
 .player {
-  float: left;
-  height: 2rem;
+  float: right;
+  width: 70%;
+  height: 1.3rem;
+}
+
+@media (max-width: 640px) {
+  .title {
+    width: 100%;
+    text-align: center;
+  }
+
+  .title h2 {
+    font-size: 0.9rem;
+  }
+
+  .player {
+    display: block;
+    margin: 0 auto;
+    max-width: 440px;
+    height: 2.5rem;
+    width: 100%;
+    float: none;
+  }
 }
 
 /**
@@ -300,10 +328,6 @@ body {
   cursor: pointer;
 }
 
-.top-tracks button.track-neutral {
-
-}
-
 .top-tracks button.track-playing {
   padding-left: 0.4rem;
 }
@@ -379,7 +403,7 @@ body {
   border: 1px solid #666;
 }
 
-@media (max-width: 425px) {
+@media (max-width: 900px) {
   .related-artists li {
     width: 100%;
   }
