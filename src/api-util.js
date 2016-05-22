@@ -78,6 +78,10 @@
 
     playTrack: function (id) {
       app.store.receive(app.store.types.PLAY_TRACK, id);
+    },
+
+    pauseTrack: function (id) {
+      app.store.receive(app.store.types.PAUSE_TRACK, id);
     }
   };
 })();

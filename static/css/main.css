@@ -284,28 +284,39 @@ body {
 }
 
 .top-tracks button {
+  box-sizing: border-box;
   float: left;
-  width: 1.5rem;
-  height: 1.5rem;
-  line-height: 1.6;
-  padding-left: 0.45rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  line-height: 1.75;
+  padding-left: 0.5rem;
   margin-right: 1rem;
   font-size: 0.85rem;
   border-radius: 50%;
-  border: 0;
   outline: 0;
-  background-color: #1DB954;
-  color: #fff;
+  border: 1px solid #cdcaca;
+  background-color: transparent;
+  color: #cdcaca;
+  cursor: pointer;
+}
+
+.top-tracks button.track-neutral {
+
+}
+
+.top-tracks button.track-playing {
+  padding-left: 0.4rem;
 }
 
 .top-tracks button:hover {
-  background-color: #1ED760;
+  border-color: #fff;
+  color: #fff;
 }
 
 .top-tracks p {
   float: left;
   font-size: 0.85rem;
-  line-height: 1.7;
+  line-height: 2;
 }
 
 /**

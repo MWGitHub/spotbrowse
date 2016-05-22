@@ -82,6 +82,10 @@
 
     playTrack: function (id) {
       app.store.receive(app.store.types.PLAY_TRACK, id);
+    },
+
+    pauseTrack: function (id) {
+      app.store.receive(app.store.types.PAUSE_TRACK, id);
     }
   };
 })();
@@ -160,36 +164,64 @@
 (function () {
   var id = 'player';
 
-  var updaters = {
-    player: function (element, value) {
-      // var src = 'https://embed.spotify.com/?uri=' + value;
-      // src += '&view=coverart'
-      // element.setAttribute('src', src);
-      var playerFrame = document.getElementById(id);
-      playerFrame.contentWindow.postMessage(value.preview_url, '*');
-    }
+  var MESSAGE_TYPES = {
+    PLAY: 'PLAY',
+    PAUSE: 'PAUSE',
+    DONE: 'DONE'
   }
 
   function Player() {
     this._root = document.getElementById(id);
-    this._block = new app.Block();
-    this._block.setBinder('player', this._root, updaters.player);
+    this._port = null;
 
     var store = app.store;
-    var handleChange = this._handleChange.bind(this);
-    store.addListener(store.types.RECEIVE_PRIMARY_ARTIST, handleChange);
     store.addListener(store.types.PLAY_TRACK, this._handlePlay.bind(this));
+    store.addListener(store.types.PAUSE_TRACK, this._handlePause.bind(this));
+
+    this._connect();
   }
 
-  Player.prototype._handleChange = function () {
+  /**
+   * Connect with the player frame.
+   */
+  Player.prototype._connect = function () {
+    var channel = new MessageChannel();
+    var playerFrame = document.getElementById(id);
+    var playerWindow = playerFrame.contentWindow;
+    playerFrame.addEventListener('load', function () {
+      playerWindow.postMessage('ping', '*', [channel.port2]);
+    }, false);
+
+    this._port = channel.port1;
+    this._port.addEventListener('message', this._handleMessage.bind(this));
+    this._port.start();
+  };
+
+  Player.prototype._handleMessage = function (e) {
+    var data = e.data;
+    switch (data.type) {
+      case 'PLAY':
+        break;
+      case 'PAUSE':
+        break;
+    }
     // this._root.setAttribute('src', '');
+    // console.log(e);
+    this._port.postMessage('another');
   };
 
   Player.prototype._handlePlay = function () {
     var track = app.store.getPlayingTrack();
-    this._block.updateProperties({
-      player: track
+    console.log(track);
+    this._port.postMessage({
+      type: MESSAGE_TYPES.PLAY,
+      track: track
     });
+  };
+
+  Player.prototype._handlePause = function () {
+    var track = app.store.getPlayingTrack();
+    this._port.postMessage({ type: MESSAGE_TYPES.PAUSE });
   };
 
   app.Player = Player;
@@ -390,7 +422,8 @@
   var primaryArtist = null;
   var relatedArtists = [];
   var topTracks = [];
-  var playingTrackId = null;
+  var currentTrackId = null;
+  var isTrackPlaying = false;
 
   app.store = {
     types: {
@@ -401,7 +434,8 @@
       ERROR_RELATED_ARTISTS: 'ERROR_RELATED_ARTISTS',
       RECEIVE_TOP_TRACKS: 'RECEIVE_TOP_TRACKS',
       ERROR_TOP_TRACKS: 'ERROR_TOP_TRACKS',
-      PLAY_TRACK: 'PLAY_TRACK'
+      PLAY_TRACK: 'PLAY_TRACK',
+      PAUSE_TRACK: 'PAUSE_TRACK'
     },
 
     addListener: function (type, callback) {
@@ -424,7 +458,11 @@
           topTracks = data.tracks.slice(0, 10);
           break;
         case types.PLAY_TRACK:
-          playingTrackId = data;
+          isTrackPlaying = true;
+          currentTrackId = data;
+          break;
+        case types.PAUSE_TRACK:
+          isTrackPlaying = false;
           break;
       }
 
@@ -463,19 +501,22 @@
       return null;
     },
 
+    getPlayingTrackId: function () {
+      return currentTrackId;
+    },
+
     getPlayingTrack: function () {
-      return app.store.getTrack(playingTrackId);
+      return app.store.getTrack(app.store.getPlayingTrackId());
+    },
+
+    getIsTrackPlaying: function () {
+      return isTrackPlaying;
     }
   };
 })();
 (function () {
   var id = 'top-tracks';
-
-  function handleTrackClick(id) {
-    return function (e) {
-      app.apiUtil.playTrack(id);
-    };
-  }
+  var idNamespace = 'top-tracks-item';
 
   var updaters = {
     tracks: function (element, value) {
@@ -498,13 +539,12 @@
 
   function create(track) {
     var list = document.createElement('li');
+    list.setAttribute('id', idNamespace + '.' + track.id);
     list.setAttribute('class', 'group');
 
     var play = document.createElement('button');
+    play.setAttribute('class', 'track-neutral');
     play.innerHTML = '&#9658;';
-    var clickFunction = handleTrackClick(track.id);
-    play.addEventListener('click', clickFunction);
-    play.addEventListener('touchend', clickFunction);
     list.appendChild(play);
 
     var name = document.createElement('p');
@@ -514,10 +554,32 @@
     return list;
   }
 
+  function handleTrackClick(e) {
+    var target = e.target;
+    if (target.tagName !== 'BUTTON') {
+      return;
+    }
+
+    var match = app.util.getFirstMatching(target, idNamespace);
+
+    if (match) {
+      var current = app.store.getPlayingTrackId();
+      if (app.store.getIsTrackPlaying() && current === match) {
+        app.apiUtil.pauseTrack(match);
+      } else {
+        app.apiUtil.playTrack(match);
+      }
+    }
+  }
+
   function TopTracks() {
     this._root = document.getElementById(id);
+    this._root.addEventListener('click', handleTrackClick);
+    this._root.addEventListener('touchend', handleTrackClick);
+
     this._block = new app.Block();
     this._block.setBinder('tracks', this._root, updaters.tracks);
+
     this._loader = app.elemental.create.loader();
 
     var store = app.store;
@@ -527,8 +589,10 @@
       this._handleArtistChange.bind(this));
     store.addListener(store.types.RECEIVE_TOP_TRACKS,
       this._handleTracksChange.bind(this));
-
-    // TODO: Pause/Play button toggle
+    store.addListener(store.types.PLAY_TRACK,
+      this._handlePlayTrack.bind(this));
+    store.addListener(store.types.PAUSE_TRACK,
+      this._handlePauseTrack.bind(this));
   }
 
   TopTracks.prototype._handleSwitching = function () {
@@ -545,6 +609,40 @@
     this._block.updateProperties({
       tracks: tracks
     });
+  };
+
+  /**
+   * Stop tracks and play the current one.
+   */
+  TopTracks.prototype._handlePlayTrack = function () {
+    var current = app.store.getPlayingTrackId();
+    var tracks = this._root.children;
+    for (var i = 0; i < tracks.length; ++i) {
+      var track = tracks[i];
+      var button = track.children[0]
+      var id = app.util.extractId(track.id);
+      if (id !== current) {
+        button.setAttribute('class', 'track-neutral');
+        button.innerHTML = '&#9658;';
+      } else {
+        button.setAttribute('class', 'track-playing');
+        button.innerHTML = '&#10073;&#10073;';
+      }
+    }
+  };
+
+  TopTracks.prototype._handlePauseTrack = function () {
+    var current = app.store.getPlayingTrackId();
+    var tracks = this._root.children;
+    for (var i = 0; i < tracks.length; ++i) {
+      var track = tracks[i];
+      var id = app.util.extractId(track.id);
+      if (id === current) {
+        var button = track.children[0]
+        button.setAttribute('class', 'track-neutral');
+        button.innerHTML = '&#9658;';
+      }
+    }
   };
 
   app.TopTracks = TopTracks;
@@ -575,6 +673,19 @@
       while (element.firstChild) {
         element.removeChild(element.firstChild);
       }
+    },
+
+    /**
+     * Extracts the id from the key.
+     * @param  {string} key the key used for namespacing.
+     * @return {string}     the id.
+     */
+    extractId: function (key) {
+      var split = key.split('.');
+      if (split.length <= 1) {
+        throw 'Invalid key';
+      }
+      return split[1];
     },
 
     /**

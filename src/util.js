@@ -27,6 +27,19 @@
     },
 
     /**
+     * Extracts the id from the key.
+     * @param  {string} key the key used for namespacing.
+     * @return {string}     the id.
+     */
+    extractId: function (key) {
+      var split = key.split('.');
+      if (split.length <= 1) {
+        throw 'Invalid key';
+      }
+      return split[1];
+    },
+
+    /**
      * Finds the first matching element with the given id namespace.
      * @return {string} the id without the namespace or null if none found.
      */

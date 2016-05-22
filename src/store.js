@@ -4,7 +4,8 @@
   var primaryArtist = null;
   var relatedArtists = [];
   var topTracks = [];
-  var playingTrackId = null;
+  var currentTrackId = null;
+  var isTrackPlaying = false;
 
   app.store = {
     types: {
@@ -15,7 +16,8 @@
       ERROR_RELATED_ARTISTS: 'ERROR_RELATED_ARTISTS',
       RECEIVE_TOP_TRACKS: 'RECEIVE_TOP_TRACKS',
       ERROR_TOP_TRACKS: 'ERROR_TOP_TRACKS',
-      PLAY_TRACK: 'PLAY_TRACK'
+      PLAY_TRACK: 'PLAY_TRACK',
+      PAUSE_TRACK: 'PAUSE_TRACK'
     },
 
     addListener: function (type, callback) {
@@ -38,7 +40,11 @@
           topTracks = data.tracks.slice(0, 10);
           break;
         case types.PLAY_TRACK:
-          playingTrackId = data;
+          isTrackPlaying = true;
+          currentTrackId = data;
+          break;
+        case types.PAUSE_TRACK:
+          isTrackPlaying = false;
           break;
       }
 
@@ -77,8 +83,16 @@
       return null;
     },
 
+    getPlayingTrackId: function () {
+      return currentTrackId;
+    },
+
     getPlayingTrack: function () {
-      return app.store.getTrack(playingTrackId);
+      return app.store.getTrack(app.store.getPlayingTrackId());
+    },
+
+    getIsTrackPlaying: function () {
+      return isTrackPlaying;
     }
   };
 })();

@@ -12,30 +12,64 @@
     <script type="text/javascript">
       document.addEventListener('DOMContentLoaded', function () {
         var track = null;
+        var isFinishedPlaying = false;
+        var port = null;
         var audioElement = document.getElementById('audio');
 
         var player = {
-          setTrack: function (url) {
-            track = url;
-            audioElement.setAttribute('src', url);
-            player.play();
+          setTrack: function (inputTrack) {
+            // Check if should resume
+            if (track && track.id === inputTrack.id && !isFinishedPlaying) {
+            } else {
+              isFinishedPlaying = false;
+              audioElement.setAttribute('src', inputTrack.preview_url);
+            }
+            track = inputTrack;
           },
 
           play: function () {
-            player.stop();
+            player.pause();
             if (track) {
               audioElement.play();
             }
           },
 
-          stop: function () {
+          pause: function () {
             audioElement.pause();
           }
         };
 
-        window.addEventListener('message', function (e) {
-          player.setTrack(e.data);
+        audioElement.addEventListener('ended', function () {
+          isFinishedPlaying = true;
+          port.postMessage({ type: 'DONE' });
+          player.pause();
         });
+
+        function handleMessage(e) {
+          var data = e.data;
+          console.log(data);
+          switch (data.type) {
+            case 'PLAY':
+              player.setTrack(data.track);
+              player.play();
+              break;
+            case 'PAUSE':
+              player.pause();
+              break;
+          }
+        }
+
+        function handshake(e) {
+          window.removeEventListener('message', handshake);
+
+          port = e.ports[0];
+          port.start();
+          port.postMessage('pong');
+
+          port.addEventListener('message', handleMessage);
+        }
+
+        window.addEventListener('message', handshake);
       });
     </script>
   </body>
