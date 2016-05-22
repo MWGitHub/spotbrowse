@@ -131,6 +131,10 @@
           return isAllowed;
         }
 
+        function isTouch(e) {
+          return !!e.changedTouches;
+        }
+
         var track = null;
         var isPlaying = false;
         var port = null;
@@ -229,7 +233,7 @@
 
           // Center the cursor on the mouse
           var x = 0;
-          if (e instanceof TouchEvent) {
+          if (isTouch(e)) {
             x = e.changedTouches[0].pageX;
           } else {
             x = e.pageX - cursor.offsetWidth / 2;
@@ -247,7 +251,7 @@
           if (!isDragging) return;
 
           var x = 0;
-          if (e instanceof TouchEvent) {
+          if (isTouch(e)) {
             x = e.changedTouches[0].pageX;
           } else {
             x = e.pageX - cursor.offsetWidth / 2;
