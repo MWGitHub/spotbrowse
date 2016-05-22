@@ -278,6 +278,10 @@ body {
   cursor: pointer;
 }
 
+.related-artists-info p:hover {
+  text-decoration: underline;
+}
+
 .related-artists-info button {
   padding: 0.05rem 0.5rem;
   margin: 0;
