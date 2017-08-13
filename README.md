@@ -4,11 +4,11 @@ SpotBrowse is an artist browser using the Spotify API. Find related artists and 
 
 Check it out at [www.mwguy.com.com/spotbrowse](http://www.mwguy.com/spotbrowse/)
 
-###Welcome View:
+### Welcome View:
 
 ![welcome]
 
-###Features
+### Features
 * Overview of the artist
 * Link from the artist to their Spotify page
 * Top tracks for the artist with previews
@@ -17,7 +17,7 @@ Check it out at [www.mwguy.com.com/spotbrowse](http://www.mwguy.com/spotbrowse/)
 * Browse artists while preview continues playing
 * Return to the currently playing artist
 
-###Usage
+### Usage
 To build the project run the following script in the cloned directory:  
 `./build.sh`
 
@@ -26,7 +26,7 @@ To watch for changes and automatically build run this command in the cloned dire
 
 Open index.html in the browser to load the page.
 
-###TODO
+### TODO
 - [ ] Allow navigation history for back and forward
 - [ ] Add query information to start at different artists and tracks
 
